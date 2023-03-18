@@ -30,7 +30,7 @@ void arrow(float fi, int px, int py, HDC hdc) {
 void generateList(int *x, int *y) {
     int noCenter = edges - 1;
     int sideLength = (int)floor(noCenter * 0.25);
-    int lastX = 200, lastY  = 200, incX = 200, incY = 0, index, temp;
+    int lastX = 200, lastY  = 200, incX = 200, incY = 0, index = 0, temp;
 
     for (int i = 0; i < 4; i++) {
         if (i == 3) {
@@ -38,19 +38,19 @@ void generateList(int *x, int *y) {
             sideLength = noCenter;
         }
         for (int j = 0; j < sideLength; j++) {
-            index = i * sideLength + j;
             x[index] = lastX;
             y[index] = lastY;
             lastX += incX;
             lastY += incY;
+            index++;
         }
         temp = -incX;
         incX = incY;
         incY = temp;
     }
 
-    x[noCenter] = (incX + x[sideLength - 1]) / 2;
-    y[noCenter] = x[noCenter];
+    x[index] = (incX + x[sideLength - 1]) / 2;
+    y[index] = x[index];
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE

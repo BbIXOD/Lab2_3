@@ -1,5 +1,6 @@
 #include<windows.h>
 #include<math.h>
+#include <time.h>
 #include <stdio.h>
 
 #define n1 2
@@ -30,12 +31,12 @@ void arrow(float fi, int px, int py, HDC hdc) {
 void generateList(int *x, int *y) {
     int noCenter = edges - 1;
     int sideLength = (int)floor(noCenter * 0.25);
-    int lastX = 200, lastY  = 200, incX = 200, incY = 0, index = 0, temp;
+    int lastX = 500, lastY  = 500, incX = 100, incY = 0, index = 0, temp;
 
     for (int i = 0; i < 4; i++) {
         if (i == 3) {
-            incY *= sideLength / noCenter;
-            sideLength = noCenter;
+            incY = (int)((float)(incY * sideLength) / (float)(noCenter - sideLength * 3));
+            sideLength = sideLength + noCenter - sideLength * 4;
         }
         for (int j = 0; j < sideLength; j++) {
             x[index] = lastX;
@@ -48,9 +49,23 @@ void generateList(int *x, int *y) {
         incX = incY;
         incY = temp;
     }
+    int sl = (int)floor(noCenter * 0.25);
+    x[index] = (x[0] + x[sl]) / 2;
+    y[index] = (y[0] + y[sl * 2]) / 2;
+}
 
-    x[index] = (incX + x[sideLength - 1]) / 2;
-    y[index] = x[index];
+void randM(float **matrix, int n) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matrix[i][j] = (float)rand() * 2 / RAND_MAX;
+}
+
+void mulM(float **matrix, int n) {
+
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = (float)((1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f) > 1.0f);
+        }
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE
@@ -101,13 +116,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     switch (messg) {
         case WM_PAINT :
             hdc = BeginPaint(hWnd, &ps);
-            char *nn[3][2] = {"1", "2", "3"};
-            int nx[3] = {100, 200, 300};
-            int ny[3] = {100, 100, 100};
+            char *nn[edges + max(0, edges - 9)] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "1", "0"};
+            int nx[edges];
+            int ny[edges];
             int dx = 16, dy = 16, dtx = 5;
             int i;
 
-            //generateList(nx, ny);
+            generateList(nx, ny);
+
+            float matrix[edges][edges];
+            float *matrixPtr[edges];
+            for (i = 0; i < edges; i++) {
+                matrixPtr[i] = matrix[i];
+            }
+
+            //srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
+            srand(time(NULL));
+            randM(&matrixPtr[0], edges);
+            mulM(&matrixPtr[0], edges);
 
             HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));
             HPEN KPen = CreatePen(PS_SOLID, 1, RGB(20, 20, 5));
@@ -121,9 +147,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             arrow(-45.0f,(int)((float)nx[2]-(float)dx*0.5f),(int)((float)ny[2]-(float)dy*0.8f), hdc);
 
             SelectObject(hdc, BPen);
-            for(i=0;i<=2;i++){
+
+            int count = 0;
+            for(i=0;i<edges;i++){
                 Ellipse(hdc, nx[i]-dx,ny[i]-dy,nx[i]+dx,ny[i]+dy);
-                TextOut(hdc, nx[i]-dtx,ny[i]-dy/2, nn[i][0],1);
+                if (i < 9) TextOut(hdc, nx[i]-dtx,ny[i]-dy/2, nn[count],1);
+                else {
+                    TextOut(hdc, nx[i] - dtx * 2, ny[i] - dy / 2, nn[count], 1);
+                    count++;
+                    TextOut(hdc, nx[i], ny[i] - dy / 2, nn[count], 1);
+                }
+                count++;
             }
             EndPaint(hWnd, &ps);
             break;

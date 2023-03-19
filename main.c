@@ -2,6 +2,8 @@
 #include<math.h>
 #include <time.h>
 #include <stdbool.h>
+#include <float.h>
+#include <stdio.h>
 
 #define n1 2
 #define n2 1
@@ -9,7 +11,7 @@
 #define n4 8
 #define edges (n3 + 10)
 
-bool drawArrows = false;
+bool drawArrows = true;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -75,6 +77,14 @@ float getAngle(int startX, int endX, int startY, int endY) {
     int vy = endY - startY;
     float len = sqrtf((float)(vx * vx + vy * vy));
     return acosf((float)vx / len) * (float)(vy < 0 ? -1 : 1);
+}
+
+void rotate(float angle, int r, int *arr) {
+    int x = (int)((float)r * cosf(angle));
+    int y = (int)((float)r * sinf(angle));
+    arr[0] = x;
+    arr[1] = y;
+
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE
@@ -150,35 +160,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
             for (int i = 0; i < edges; i++)
                 for (int j = 0; j < edges; j++) {
+                    float angle;
+                    int destX, destY;
+                    int rotation[2];
                     if (matrix[i][j] == 1.0f) {
-                        MoveToEx(hdc, nx[i], ny[i], NULL);
-                        if (i == j) {
-                            AngleArc(hdc, nx[i] - dx * 2, ny[i], dx * 2, 0, 359);
-                            continue;
-                        }
-                        if (matrix[i][j] == matrix[i][j] && i > j && !drawArrows) continue;
                         bool arc = false;
-                        float angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
-                        int destX = nx[j];
-                        int destY= ny[j] - dx * (ny[i] < ny[j]) + dx * (ny[i] > ny[j]);
-                        if (destY == ny[j]) destX = nx[j] - dy * (nx[i] < nx[j]) + dy * (nx[i] > nx[j]);
+                        bool lines = true;
+                        if (matrix[i][j] == matrix[j][i] && i > j) lines = false;
 
                         for (int el = 0; el < edges; el++) {
-                            if (getAngle(nx[i], nx[el], ny[i], ny [el])
-                            == getAngle(nx[el], nx[j], ny[el], ny[j]))
+                            if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])
+                            - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
                                 arc = true;
                         }
-                        if (!arc) {
-                            LineTo(hdc, destX, destY);
+                        if (lines) MoveToEx(hdc, nx[i], ny[i], NULL);
+
+                        if (i == j) {
+                            AngleArc(hdc, nx[i] - dx * 2, ny[i], (int)((float)dx * 1.45f), 0, 359);
+                            if (drawArrows) angle = M_PI / 4;
+                        }
+                        else if (arc) {
+                            int halfX = (int)((float)(nx[i] + nx[j]) * 0.5f);
+                            int halfY = (int)((float)(ny[i] + ny[j]) * 0.5f);
+                            if (nx[i] == nx[j]) {
+                                halfX += dx * 2;
+                            } else {
+                                halfY += dx * 2;
+                            }
+
+                            angle = getAngle(halfX, nx[j], halfY, ny[j]);
+
+                            if (lines) LineTo(hdc, halfX, halfY);
                         }
                         else {
-                            int halfX = (int)((float)(nx[i] + nx[j]) * 0.5f) + dx * (ny[i] != ny[j]) * 2;
-                            int halfY = (int)((float)(ny[i] + ny[j]) * 0.5f) + dx * (nx[i] != nx[j]) * 2;
-                            angle = getAngle(halfX, destX, halfY, destY);
-
-                            LineTo(hdc, halfX, halfY);
-                            LineTo(hdc, destX, destY);
+                            angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
                         }
+                        if (lines || drawArrows) {
+                            rotate(angle, dx, rotation);
+                            destX = nx[j] - rotation[0];
+                            destY = ny[j] - rotation[1];
+                        }
+                        if (lines) LineTo(hdc, destX, destY);
                         if (drawArrows) arrow(angle, destX, destY, hdc);
                     }
                 }

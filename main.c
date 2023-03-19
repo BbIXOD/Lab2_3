@@ -59,10 +59,10 @@ void generateList(int *x, int *y) {
 }
 
 void fillNums(char *arr, int len) {
+    char *ptr = arr;
     for (int i = 0; i < len; i++) {
-        sprintf(arr, "%i", i + 1);
-        arr = &arr[1];
-        if (i >= 9) arr = &arr[1];
+        sprintf(ptr, "%i", i + 1);
+        ptr += strlen(ptr);
     }
 }
 

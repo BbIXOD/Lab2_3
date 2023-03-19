@@ -58,6 +58,14 @@ void generateList(int *x, int *y) {
     y[index] = (y[0] + y[sl * 2]) / 2;
 }
 
+void fillNums(char *arr, int len) {
+    for (int i = 0; i < len; i++) {
+        sprintf(arr, "%i", i + 1);
+        arr = &arr[1];
+        if (i >= 9) arr = &arr[1];
+    }
+}
+
 void randM(float **matrix, int n) {
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
@@ -135,11 +143,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     switch (messg) {
         case WM_PAINT :
             hdc = BeginPaint(hWnd, &ps);
-            char *nn[edges + max(0, edges - 9)] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "1", "0"};
+            char nn[edges + max(0, edges - 9)];
             int nx[edges];
             int ny[edges];
             int dx = 16, dy = 16, dtx = 5;
 
+            fillNums(nn, edges);
             generateList(nx, ny);
 
             float matrix[edges][edges];
@@ -210,11 +219,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             int count = 0;
             for(int i=0;i<edges;i++){
                 Ellipse(hdc, nx[i]-dx,ny[i]-dy,nx[i]+dx,ny[i]+dy);
-                if (i < 9) TextOut(hdc, nx[i]-dtx,ny[i]-dy/2, nn[count],1);
+                if (i < 9) TextOut(hdc, nx[i]-dtx,ny[i]-dy/2, &nn[count],1);
                 else {
-                    TextOut(hdc, nx[i] - dtx * 2, ny[i] - dy / 2, nn[count], 1);
+                    TextOut(hdc, nx[i] - dtx * 2, ny[i] - dy / 2, &nn[count], 1);
                     count++;
-                    TextOut(hdc, nx[i], ny[i] - dy / 2, nn[count], 1);
+                    TextOut(hdc, nx[i], ny[i] - dy / 2, &nn[count], 1);
                 }
                 count++;
             }

@@ -72,13 +72,12 @@ void randM(float **matrix, int n) {
             matrix[i][j] = (float)rand() / RAND_MAX * 2;
 }
 
-void mulM(float **matrix, int n) {
+void mulM(float **matrix, int n, float mul) {
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            if (matrix[j][i] == 1.0f && !drawArrows && i < j) matrix[i][j] = 1.0f;
-            matrix[i][j] = (float) ((matrix[i][j] * (1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f)) > 1.0f);
-            if (matrix[i][j] == 1.0f && !drawArrows && i > j) matrix[j][i] = 1.0f;
+            if (i > j && !drawArrows) matrix[i][j] = matrix[j][i];
+            else matrix[i][j] = (float) (matrix[i][j] * mul > 1.0f);
         }
     }
 }
@@ -163,7 +162,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
             //srand(time(NULL));
             randM(&matrixPtr[0], edges);
-            mulM(&matrixPtr[0], edges);
+            mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f);
 
             HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));
             HPEN KPen = CreatePen(PS_SOLID, 1, RGB(20, 20, 5));

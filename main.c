@@ -11,7 +11,7 @@
 #define n4 8
 #define edges (n3 + 10)
 
-bool drawArrows = true;
+bool drawArrows = false;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -74,10 +74,13 @@ void randM(float **matrix, int n) {
 
 void mulM(float **matrix, int n) {
 
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            matrix[i][j] = (float)((matrix[i][j] * (1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f)) > 1.0f);
+            if (matrix[j][i] == 1.0f && !drawArrows && i < j) matrix[i][j] = 1.0f;
+            matrix[i][j] = (float) ((matrix[i][j] * (1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f)) > 1.0f);
+            if (matrix[i][j] == 1.0f && !drawArrows && i > j) matrix[j][i] = 1.0f;
         }
+    }
 }
 
 float getAngle(int startX, int endX, int startY, int endY) {
@@ -228,6 +231,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 count++;
             }
             EndPaint(hWnd, &ps);
+
+            for (int i = 0; i < edges; i++) {
+                for (int j = 0; j < edges; j++) {
+                    printf("%i ", (int)matrix[i][j]);
+                }
+                printf("\n");
+            }
             break;
         case WM_DESTROY:
             PostQuitMessage(0);

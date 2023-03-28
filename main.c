@@ -35,7 +35,7 @@ void arrow(float fi, int px, int py, HDC hdc) {
 void generateList(int *x, int *y) {
     int noCenter = edges - 1;
     int sideLength = (int)floor(noCenter * 0.25);
-    int lastX = 500, lastY  = 500, incX = 100, incY = 0, index = 0, temp;
+    int lastX = 700, lastY  = 500, incX = 100, incY = 0, index = 0, temp;
 
     for (int i = 0; i < 4; i++) {
         if (i == 3) {
@@ -76,11 +76,27 @@ void mulM(float **matrix, int n, float mul) {
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
+            if (matrix[i][j] == 3.0f) {
+                matrix[i][j] = 1.0f;
+                continue;
+            }
             matrix[i][j] = (float) (matrix[i][j] * mul > 1.0f);
             if (matrix[i][j] == 1.0f && !drawArrows) {
-                matrix[j][i] = 1.0f;
+                matrix[j][i] = i < j ? 3.0f : 1.0f;
             }
         }
+    }
+}
+
+void showM(float **matrix, int n, HDC hdc) {
+    int curX = 300, curY = 300, incY = 30, incX = 15;
+    char symbol[2];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            sprintf(symbol, "%i", (int)matrix[i][j]);
+            TextOut(hdc, curX + j * incX, curY, symbol, 1);
+        }
+        curY += incY;
     }
 }
 
@@ -97,100 +113,6 @@ void rotate(float angle, int r, int *arr) {
     arr[0] = x;
     arr[1] = y;
 
-}
-
-void makeGraph(HDC hdc) {
-    char nn[edges + max(0, edges - 9)];
-    int nx[edges];
-    int ny[edges];
-    int dx = 16, dy = 16, dtx = 5;
-
-    fillNums(nn, edges);
-    generateList(nx, ny);
-
-    float matrix[edges][edges];
-    float *matrixPtr[edges];
-    for (int i = 0; i < edges; i++) {
-        matrixPtr[i] = matrix[i];
-    }
-
-    srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
-    //srand(time(NULL));
-    randM(&matrixPtr[0], edges);
-    mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f);
-
-    HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));
-    HPEN KPen = CreatePen(PS_SOLID, 1, RGB(20, 20, 5));
-
-    SelectObject(hdc, KPen);
-
-    for (int i = 0; i < edges; i++)
-        for (int j = 0; j < edges; j++) {
-            float angle;
-            int destX, destY;
-            int rotation[2];
-            if (matrix[i][j] == 1.0f) {
-                bool arc = false;
-                bool lines = true;
-                if (matrix[i][j] == matrix[j][i] && i > j) lines = false;
-
-                for (int el = 0; el < edges; el++) {
-                    if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])
-                              - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
-                        arc = true;
-                }
-                if (lines) MoveToEx(hdc, nx[i], ny[i], NULL);
-
-                if (i == j) {
-                    AngleArc(hdc, nx[i] - dx * 2, ny[i], (int)((float)dx * 1.45f), 0, 359);
-                    if (drawArrows) angle = M_PI / 4;
-                }
-                else if (arc) {
-                    int halfX = (int)((float)(nx[i] + nx[j]) * 0.5f);
-                    int halfY = (int)((float)(ny[i] + ny[j]) * 0.5f);
-                    if (nx[i] == nx[j]) {
-                        halfX += dx * 2;
-                    } else {
-                        halfY += dx * 2;
-                    }
-
-                    angle = getAngle(halfX, nx[j], halfY, ny[j]);
-
-                    if (lines) LineTo(hdc, halfX, halfY);
-                }
-                else {
-                    angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
-                }
-                if (lines || drawArrows) {
-                    rotate(angle, dx, rotation);
-                    destX = nx[j] - rotation[0];
-                    destY = ny[j] - rotation[1];
-                }
-                if (lines) LineTo(hdc, destX, destY);
-                if (drawArrows) arrow(angle, destX, destY, hdc);
-            }
-        }
-
-    SelectObject(hdc, BPen);
-
-    int count = 0;
-    for(int i=0;i<edges;i++){
-        Ellipse(hdc, nx[i]-dx,ny[i]-dy,nx[i]+dx,ny[i]+dy);
-        if (i < 9) TextOut(hdc, nx[i]-dtx,ny[i]-dy/2, &nn[count],1);
-        else {
-            TextOut(hdc, nx[i] - dtx * 2, ny[i] - dy / 2, &nn[count], 1);
-            count++;
-            TextOut(hdc, nx[i], ny[i] - dy / 2, &nn[count], 1);
-        }
-        count++;
-    }
-
-    for (int i = 0; i < edges; i++) {
-        for (int j = 0; j < edges; j++) {
-            printf("%i ", (int)matrix[i][j]);
-        }
-        printf("\n");
-    }
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE
@@ -248,6 +170,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                     WS_CHILD | WS_VISIBLE | WS_BORDER,
                                     100, 100, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hBtnPrev, SW_SHOWNORMAL);
+
             hBtnPrev = CreateWindow("button", "To undirected",
                                     WS_CHILD | WS_VISIBLE | WS_BORDER,
                                     100, 130, 120, 30, hWnd, 0, hInst, NULL);
@@ -255,17 +178,102 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
         case WM_PAINT :
             hdc = BeginPaint(hWnd, &ps);
-            makeGraph(hdc);
+
+            char nn[edges + max(0, edges - 9)];
+            int nx[edges];
+            int ny[edges];
+            int dx = 16, dy = 16, dtx = 5;
+
+            fillNums(nn, edges);
+            generateList(nx, ny);
+
+            float matrix[edges][edges];
+            float *matrixPtr[edges];
+            for (int i = 0; i < edges; i++) {
+                matrixPtr[i] = matrix[i];
+            }
+
+            srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
+            //srand(time(NULL));
+            randM(&matrixPtr[0], edges);
+            mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f);
+
+            HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));
+            HPEN KPen = CreatePen(PS_SOLID, 1, RGB(20, 20, 5));
+
+            SelectObject(hdc, KPen);
+
+            for (int i = 0; i < edges; i++)
+                for (int j = 0; j < edges; j++) {
+                    float angle;
+                    int destX, destY;
+                    int rotation[2];
+                    if (matrix[i][j] == 1.0f) {
+                        bool arc = false;
+                        bool lines = true;
+                        if (matrix[i][j] == matrix[j][i] && i > j) lines = false;
+
+                        for (int el = 0; el < edges; el++) {
+                            if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])
+                                      - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
+                                arc = true;
+                        }
+                        if (lines) MoveToEx(hdc, nx[i], ny[i], NULL);
+
+                        if (i == j) {
+                            AngleArc(hdc, nx[i] - dx * 2, ny[i], (int)((float)dx * 1.45f), 0, 359);
+                            if (drawArrows) angle = M_PI / 4;
+                        }
+                        else if (arc) {
+                            int halfX = (int)((float)(nx[i] + nx[j]) * 0.5f);
+                            int halfY = (int)((float)(ny[i] + ny[j]) * 0.5f);
+                            if (nx[i] == nx[j]) {
+                                halfX += dx * 2;
+                            } else {
+                                halfY += dx * 2;
+                            }
+
+                            angle = getAngle(halfX, nx[j], halfY, ny[j]);
+
+                            if (lines) LineTo(hdc, halfX, halfY);
+                        }
+                        else {
+                            angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
+                        }
+                        if (lines || drawArrows) {
+                            rotate(angle, dx, rotation);
+                            destX = nx[j] - rotation[0];
+                            destY = ny[j] - rotation[1];
+                        }
+                        if (lines) LineTo(hdc, destX, destY);
+                        if (drawArrows) arrow(angle, destX, destY, hdc);
+                    }
+                }
+
+            SelectObject(hdc, BPen);
+
+            int count = 0;
+            for(int i=0;i<edges;i++){
+                Ellipse(hdc, nx[i]-dx,ny[i]-dy,nx[i]+dx,ny[i]+dy);
+                if (i < 9) TextOut(hdc, nx[i]-dtx,ny[i]-dy/2, &nn[count],1);
+                else {
+                    TextOut(hdc, nx[i] - dtx * 2, ny[i] - dy / 2, &nn[count], 1);
+                    count++;
+                    TextOut(hdc, nx[i], ny[i] - dy / 2, &nn[count], 1);
+                }
+                count++;
+            }
+
+            showM(&matrixPtr[0], edges, hdc);
+
             EndPaint(hWnd, &ps);
             break;
         case WM_COMMAND:
             if (lParam == (LPARAM)hBtnNext) {
                 drawArrows = true;
-                printf("Directed\n");
             }
             else {
                 drawArrows = false;
-                printf("NonDirected\n");
             }
             InvalidateRect(hWnd, NULL, TRUE);
             break;

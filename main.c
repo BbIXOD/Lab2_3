@@ -89,21 +89,75 @@ void mulM(float **matrix, int n, float mul) {
     }
 }
 
-<<<<<<< Updated upstream
-void showM(float **matrix, int n, HDC hdc) {
-    int curX = 300, curY = 300, incY = 30, incX = 15;
-    char symbol[2];
-    for (int i = 0; i < n; i++) {
+void setM(int **matrix, float **source, int n) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matrix[i][j] = (int)source[i][j];
+}
+
+void setMInt(int **matrix, int **source, int n) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matrix[i][j] = source[i][j];
+}
+
+void addM(int **matrix, int **source, int n) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matrix[i][j] += source[i][j];
+}
+
+void multiplyM(int **matrix, int **source, int n) {
+    int matrixCopy[n][n];
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matrixCopy[i][j] = matrix[i][j];
+
+    for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++) {
-            sprintf(symbol, "%i", (int)matrix[i][j]);
-=======
+            matrix[i][j] = 0;
+            for (int k = 0; k < n; k++)
+                matrix[i][j] += matrixCopy[i][k] * source[k][j];
+        }
+}
+
+void findWays(int **matrix, int n, int length) {
+    int helpM[edges][edges];
+    int *helpPtr[edges];
+    for (int i = 0; i < edges; i++) {
+        helpPtr[i] = helpM[i];
+    }
+
+    int helpMS[edges][edges];
+    int *helpSPtr[edges];
+    for (int i = 0; i < edges; i++) {
+        helpSPtr[i] = helpMS[i];
+    }
+
+    setMInt(&helpSPtr[0], matrix, n);
+    setMInt(&helpPtr[0], &helpSPtr[0], n);
+
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matrix[i][j] = 0;
+
+    for (int i = 1; i < length; i++) {
+        multiplyM(&helpPtr[0], &helpSPtr[0], n);
+        addM(matrix, &helpPtr[0], n);
+    }
+
+
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matrix[i][j] = matrix[i][j] > 0;
+}
+
 void showM(int **matrix, int n, int m, HDC hdc) {
     int curX = 300, curY = 300, incY = 20, incX = 15;
     char symbol[2];
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             sprintf(symbol, "%i", matrix[i][j]);
->>>>>>> Stashed changes
             TextOut(hdc, curX + j * incX, curY, symbol, 1);
         }
         curY += incY;
@@ -169,28 +223,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     PAINTSTRUCT ps;
     HINSTANCE hInst;
-<<<<<<< Updated upstream
-    static HWND hBtnNext, hBtnPrev;
 
-=======
-    static HWND hBtnToDir, hBtnToUnDir, hBtnAdjGraph, hBtnPow;
->>>>>>> Stashed changes
+    static HWND hBtnToDir, hBtnToUnDir, hBtnAdjGraph, hBtnPow, hBtnWays, hBtnLinked;
 
     switch (messg) {
         case WM_CREATE :
             hInst = ((LPCREATESTRUCT)lParam)->hInstance;
 
-<<<<<<< Updated upstream
-            hBtnNext = CreateWindow("button", "To directed",
-                                    WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                    100, 100, 120, 30, hWnd, 0, hInst, NULL);
-            ShowWindow(hBtnPrev, SW_SHOWNORMAL);
-
-            hBtnPrev = CreateWindow("button", "To undirected",
-                                    WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                    100, 130, 120, 30, hWnd, 0, hInst, NULL);
-            ShowWindow(hBtnNext, SW_SHOWNORMAL);
-=======
             hBtnToDir = CreateWindow("button", "To directed",
                                     WS_CHILD | WS_VISIBLE | WS_BORDER,
                                      100, 100, 120, 30, hWnd, 0, hInst, NULL);
@@ -204,13 +243,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             hBtnAdjGraph = CreateWindow("button", "Adjustency matrix",
                                        WS_CHILD | WS_VISIBLE | WS_BORDER,
                                        300, 70, 120, 30, hWnd, 0, hInst, NULL);
-            ShowWindow(hBtnToDir, SW_SHOWNORMAL);
+            ShowWindow(hBtnAdjGraph, SW_SHOWNORMAL);
 
             hBtnPow = CreateWindow("button", "Powers",
                                         WS_CHILD | WS_VISIBLE | WS_BORDER,
                                         300, 100, 120, 30, hWnd, 0, hInst, NULL);
-            ShowWindow(hBtnToDir, SW_SHOWNORMAL);
->>>>>>> Stashed changes
+            ShowWindow(hBtnPow, SW_SHOWNORMAL);
+
+            hBtnWays = CreateWindow("button", "Show 2/3step ways",
+                                   WS_CHILD | WS_VISIBLE | WS_BORDER,
+                                    300, 130, 120, 30, hWnd, 0, hInst, NULL);
+            ShowWindow(hBtnWays, SW_SHOWNORMAL);
+
+            hBtnLinked = CreateWindow("button", "Show Connections",
+                                    WS_CHILD | WS_VISIBLE | WS_BORDER,
+                                    300, 160, 120, 30, hWnd, 0, hInst, NULL);
+            ShowWindow(hBtnLinked, SW_SHOWNORMAL);
 
         case WM_PAINT :
             hdc = BeginPaint(hWnd, &ps);
@@ -306,14 +354,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 count++;
             }
 
-<<<<<<< Updated upstream
-            showM(&matrixPtr[0], edges, hdc);
-=======
             switch (outState) {
                 case 0 :
-                    for (int i = 0; i < edges; i++)
-                        for (int j = 0; j < edges; j++)
-                            outM[i][j] = (int)matrix[i][j];
+                    setM(&outPtr[0], &matrixPtr[0], edges);
                     showM(&outPtr[0], edges, edges, hdc);
                     break;
                 case 1 :
@@ -325,22 +368,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                         showM(&outPtr[0], 1, edges, hdc);
                     }
                     break;
-
+                case 2 :
+                    setM(&outPtr[0], &matrixPtr[0], edges);
+                    findWays(&outPtr[0], edges, 3);
+                    showM(&outPtr[0], edges, edges, hdc);
+                    break;
+                case 3 :
+                    setM(&outPtr[0], &matrixPtr[0], edges);
+                    findWays(&outPtr[0], edges, edges - 1);
+                    showM(&outPtr[0], edges, edges, hdc);
+                    break;
+                default:
+                    printf("Invalid");
+                    break;
             }
->>>>>>> Stashed changes
 
             EndPaint(hWnd, &ps);
             break;
         case WM_COMMAND:
-<<<<<<< Updated upstream
-            if (lParam == (LPARAM)hBtnNext) {
-                drawArrows = true;
-            }
-            else {
-                drawArrows = false;
-            }
-=======
-
             if (lParam == (LPARAM)hBtnToDir) {
                 drawArrows = true;
             }
@@ -353,7 +398,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             else if (lParam == (LPARAM)hBtnPow) {
                 outState = 1;
             }
->>>>>>> Stashed changes
+            else if (lParam == (LPARAM)hBtnWays) {
+                outState = 2;
+            }
+            else if (lParam == (LPARAM)hBtnLinked) {
+                outState = 3;
+            }
+
             InvalidateRect(hWnd, NULL, TRUE);
             break;
 

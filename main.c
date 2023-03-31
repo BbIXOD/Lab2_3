@@ -444,7 +444,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     }
 
                     if (!directed) {
-                        showM(&outPtr[0], 2, edges, hdc);
+                        showM(&outPtr[0], 1, edges, hdc);
                         break;
                     }
 
@@ -471,7 +471,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
                     linkM(&matrixPtr[0], &outPtr[0], &helpPtr[0], edges);
 
-                    showM(&outPtr[0], 1, maxInRow(&outPtr[0], edges), hdc);
+                    showM(&outPtr[0], 1, edges, hdc);
                 }
                     break;
                 case 5 : {
@@ -532,7 +532,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     showM(&outPtr[0], 0, point, hdc);
                 }
                 default:
-                    printf("Invalid");
+                    break;
             }
 
             SelectObject(hdc, KPen);

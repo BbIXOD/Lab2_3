@@ -209,9 +209,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     int destX, destY;
                     int rotation[2];
                     if (matrix[i][j] == 1.0f) {
-                        bool arc = false;
+                        int arc = 0;
                         bool lines = true;
-                        if (matrix[i][j] == matrix[j][i] && i > j) lines = false;
+                        if (matrix[i][j] == matrix[j][i] && i > j) {
+                            if (drawArrows == true) arc = -1;
+                            else lines = false;
+                        }
 
                         for (int el = 0; el < edges; el++) {
                             if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])
@@ -224,21 +227,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                             AngleArc(hdc, nx[i] - dx * 2, ny[i], (int)((float)dx * 1.45f), 0, 359);
                             if (drawArrows) angle = M_PI / 4;
                         }
-                        else if (arc) {
-                            int halfX = (int)((float)(nx[i] + nx[j]) * 0.5f);
-                            int halfY = (int)((float)(ny[i] + ny[j]) * 0.5f);
-                            if (nx[i] == nx[j]) {
-                                halfX += dx * 2;
-                            } else {
-                                halfY += dx * 2;
-                            }
-
-                            angle = getAngle(halfX, nx[j], halfY, ny[j]);
-
-                            if (lines) LineTo(hdc, halfX, halfY);
-                        }
                         else {
-                            angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
+
+                            if (arc != 0) {
+                                int halfX = (int) ((float) (nx[i] + nx[j]) * 0.5f);
+                                int halfY = (int) ((float) (ny[i] + ny[j]) * 0.5f);
+                                if (nx[i] == nx[j]) {
+                                    halfX += (dx * 2 + (halfY / 60)) * arc;
+                                } else {
+                                    halfY += (dx * 2 + (halfX / 60)) * arc;
+                                }
+                                angle = getAngle(halfX, nx[j], halfY, ny[j]);
+                                if (lines) LineTo(hdc, halfX, halfY);
+                            }
+                            else {
+                                angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
+                            }
                         }
                         if (lines || drawArrows) {
                             rotate(angle, dx, rotation);

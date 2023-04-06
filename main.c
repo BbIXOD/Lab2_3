@@ -39,7 +39,7 @@ deck* push(deck *d, int v) {
 }
 
 deck* pop(deck *d) {
-    if (d->prev != NULL) exit(EXIT_FAILURE);
+    if (d->next != NULL) return NULL;
 
     deck *newLast;
     newLast = d->prev;
@@ -64,7 +64,7 @@ deck* shift(deck *d) {
 }
 
 deck* clear(deck *d) {
-    while (d->next != NULL) d = d->next;
+    while (d != NULL) d = d->next;
 
     deck *temp;
 

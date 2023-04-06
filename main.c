@@ -549,11 +549,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                             if (directed == true) arc = -1;
                             else lines = false;
                         }
-
-                        for (int el = 0; el < edges; el++) {
-                            if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])
-                                      - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
-                                arc = true;
+                        else {
+                            for (int el = 0; el < edges; el++) {
+                                if (fabsf(getAngle(nx[i], nx[el], ny[i], ny[el])
+                                          - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
+                                    arc = true;
+                            }
                         }
                         if (lines) MoveToEx(hdc, nx[i], ny[i], NULL);
 

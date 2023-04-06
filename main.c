@@ -1,6 +1,5 @@
 #include<windows.h>
 #include<math.h>
-#include <time.h>
 #include <stdbool.h>
 #include <float.h>
 #include <stdio.h>
@@ -194,9 +193,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             }
 
             srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
-            //srand(time(NULL));
             randM(&matrixPtr[0], edges);
-            mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.02f - n4 * 0.005f - 0.25f);
+            mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.01f - n4 * 0.005f - 0.15f);
 
             HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));
             HPEN KPen = CreatePen(PS_SOLID, 1, RGB(20, 20, 5));
@@ -210,10 +208,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     int rotation[2];
                     if (matrix[i][j] == 1.0f) {
                         int arc = 0;
-                        bool lines = true;
                         if (matrix[i][j] == matrix[j][i] && i > j) {
-                            if (drawArrows == true) arc = -1;
-                            else lines = false;
+                            arc = -1;
                         }
 
                         for (int el = 0; el < edges; el++) {
@@ -221,11 +217,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                       - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
                                 arc = true;
                         }
-                        if (lines) MoveToEx(hdc, nx[i], ny[i], NULL);
+
+                        MoveToEx(hdc, nx[i], ny[i], NULL);
 
                         if (i == j) {
                             AngleArc(hdc, nx[i] - dx * 2, ny[i], (int)((float)dx * 1.45f), 0, 359);
-                            if (drawArrows) angle = M_PI / 4;
+                            angle = M_PI / 4;
                         }
                         else {
 
@@ -238,19 +235,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                     halfY += (dx * 2 + (halfX / 60)) * arc;
                                 }
                                 angle = getAngle(halfX, nx[j], halfY, ny[j]);
-                                if (lines) LineTo(hdc, halfX, halfY);
+                                LineTo(hdc, halfX, halfY);
                             }
                             else {
                                 angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
                             }
                         }
-                        if (lines || drawArrows) {
-                            rotate(angle, dx, rotation);
-                            destX = nx[j] - rotation[0];
-                            destY = ny[j] - rotation[1];
-                        }
-                        if (lines) LineTo(hdc, destX, destY);
-                        if (drawArrows) arrow(angle, destX, destY, hdc);
+                        rotate(angle, dx, rotation);
+                        destX = nx[j] - rotation[0];
+                        destY = ny[j] - rotation[1];
+
+                        LineTo(hdc, destX, destY);
+                        arrow(angle, destX, destY, hdc);
                     }
                 }
 

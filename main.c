@@ -1,6 +1,5 @@
 #include<windows.h>
 #include<math.h>
-#include <stdbool.h>
 #include <float.h>
 #include <stdio.h>
 
@@ -9,6 +8,74 @@
 #define n3 0
 #define n4 8
 #define edges (n3 + 10)
+
+typedef struct Deck {
+    int value;
+    struct Deck *next;
+    struct Deck *prev;
+} deck;
+
+deck* init(int v) {
+    deck *d;
+    d = malloc(sizeof(deck));
+    d->value = v;
+    d->next = NULL;
+    d->prev = NULL;
+
+    return d;
+}
+
+deck* push(deck *d, int v) {
+    deck *this;
+    this = malloc(sizeof(deck));
+
+    d->next = this;
+    this->prev = d;
+    this->next = NULL;
+
+    this->value = v;
+
+    return this;
+}
+
+deck* pop(deck *d) {
+    if (d->prev != NULL) exit(EXIT_FAILURE);
+
+    deck *newLast;
+    newLast = d->prev;
+    newLast->next = NULL;
+
+    free(d);
+
+    return newLast;
+}
+
+deck* shift(deck *d) {
+    if (d->prev != NULL) exit(EXIT_FAILURE);
+
+    deck *newFirst;
+
+    newFirst = d->next;
+    newFirst->prev = NULL;
+
+    free(d);
+
+    return newFirst;
+}
+
+deck* clear(deck *d) {
+    while (d->next != NULL) d = d->next;
+
+    deck *temp;
+
+    while (d != NULL) {
+        temp = d;
+        free(temp);
+        d = d->prev;
+    }
+}
+
+
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -197,11 +264,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                         if (matrix[i][j] == matrix[j][i] && i > j) {
                             arc = -1;
                         }
-
-                        for (int el = 0; el < edges; el++) {
-                            if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])
-                                      - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
-                                arc = true;
+                        else {
+                            for (int el = 0; el < edges; el++) {
+                                if (fabsf(getAngle(nx[i], nx[el], ny[i], ny[el])
+                                          - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
+                                    arc = 1;
+                            }
                         }
 
                         MoveToEx(hdc, nx[i], ny[i], NULL);
@@ -216,9 +284,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                 int halfX = (int) ((float) (nx[i] + nx[j]) * 0.5f);
                                 int halfY = (int) ((float) (ny[i] + ny[j]) * 0.5f);
                                 if (nx[i] == nx[j]) {
-                                    halfX += (dx * 2 + (halfY / 60)) * arc;
+                                    halfX += (dx * 2 + (halfY / 100)) * arc;
                                 } else {
-                                    halfY += (dx * 2 + (halfX / 60)) * arc;
+                                    halfY += (dx * 2 + (halfX / 100)) * arc;
                                 }
                                 angle = getAngle(halfX, nx[j], halfY, ny[j]);
                                 LineTo(hdc, halfX, halfY);

@@ -194,14 +194,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     int rotation[2];
                     if (matrix[i][j] == 1.0f) {
                         int arc = 0;
-<<<<<<< Updated upstream
                         if (matrix[i][j] == matrix[j][i] && i > j) {
                             arc = -1;
                         }
-=======
-                        bool lines = true;
-                        if (matrix[i][j] == matrix[j][i] && i > j) lines = false;
->>>>>>> Stashed changes
 
                         for (int el = 0; el < edges; el++) {
                             if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])
@@ -260,12 +255,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             EndPaint(hWnd, &ps);
             break;
         case WM_COMMAND:
-            if (lParam == (LPARAM)hBtnNext) {
-                drawArrows = true;
-            }
-            else {
-                drawArrows = false;
-            }
             InvalidateRect(hWnd, NULL, TRUE);
             break;
 

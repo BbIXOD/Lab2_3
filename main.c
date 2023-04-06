@@ -10,8 +10,6 @@
 #define n4 8
 #define edges (n3 + 10)
 
-bool drawArrows = false;
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 char caption[] = "Lab 3";
@@ -75,14 +73,7 @@ void mulM(float **matrix, int n, float mul) {
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            if (matrix[i][j] == 3.0f) {
-                matrix[i][j] = 1.0f;
-                continue;
-            }
             matrix[i][j] = (float) (matrix[i][j] * mul > 1.0f);
-            if (matrix[i][j] == 1.0f && !drawArrows) {
-                matrix[j][i] = i < j ? 3.0f : 1.0f;
-            }
         }
     }
 }
@@ -158,21 +149,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     PAINTSTRUCT ps;
     HINSTANCE hInst;
-    static HWND hBtnNext, hBtnPrev;
+    static HWND hBtnNext;
 
 
     switch (messg) {
         case WM_CREATE :
             hInst = ((LPCREATESTRUCT)lParam)->hInstance;
 
-            hBtnNext = CreateWindow("button", "To directed",
+            hBtnNext = CreateWindow("button", "Next Step",
                                     WS_CHILD | WS_VISIBLE | WS_BORDER,
                                     100, 100, 120, 30, hWnd, 0, hInst, NULL);
-            ShowWindow(hBtnPrev, SW_SHOWNORMAL);
-
-            hBtnPrev = CreateWindow("button", "To undirected",
-                                    WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                    100, 130, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hBtnNext, SW_SHOWNORMAL);
 
         case WM_PAINT :
@@ -208,9 +194,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     int rotation[2];
                     if (matrix[i][j] == 1.0f) {
                         int arc = 0;
+<<<<<<< Updated upstream
                         if (matrix[i][j] == matrix[j][i] && i > j) {
                             arc = -1;
                         }
+=======
+                        bool lines = true;
+                        if (matrix[i][j] == matrix[j][i] && i > j) lines = false;
+>>>>>>> Stashed changes
 
                         for (int el = 0; el < edges; el++) {
                             if (fabsf(getAngle(nx[i], nx[el], ny[i], ny [el])

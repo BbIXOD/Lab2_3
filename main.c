@@ -29,7 +29,7 @@ deck* init(int v) {
 }
 
 deck* unshift(deck *d, int v) {
-    if (d->prev != NULL) return NULL;
+    while (d->prev != NULL) d = d->prev;
 
     deck *this;
     this = malloc(sizeof(deck));
@@ -195,13 +195,13 @@ void rotate(float angle, int r, int *arr) {
 int dfsStep(int **matrix, deck *queue, deck *tree, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[queue->value][i] && !visited[i]) {
-            push(queue, i);
+            queue = push(queue, i);
             int link[2] = {1, 2};
-            push(tree, *&link[0]);
+            tree = push(tree, *&link[0]);
             visited[i] = 1;
             return 0;
         }
-    pop(queue);
+    queue = pop(queue);
 
     if (queue == NULL) return 1;
     return 0;
@@ -213,11 +213,11 @@ int bfsStep(int **matrix, deck *queue, deck *tree, int n) {
         if (matrix[queue->value][i] && !visited[i]) {
             unshift(queue, i);
             int link[2] = {1, 2};
-            push(tree, *&link[0]);
+            tree = push(tree, *&link[0]);
             visited[i] = 1;
             return 0;
         }
-    pop(queue);
+    queue = pop(queue);
 
     if (queue == NULL) return 1;
     return 0;
@@ -268,7 +268,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     PAINTSTRUCT ps;
     HINSTANCE hInst;
-    static HWND hBtnNext;
+    static HWND hBtnNext, hEdit;
 
 
     switch (messg) {
@@ -280,8 +280,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                     100, 100, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hBtnNext, SW_SHOWNORMAL);
 
+            hEdit = CreateWindow("edit", "",
+                                 WS_CHILD | WS_VISIBLE | WS_BORDER,
+                                 230, 100, 120, 30, hWnd, 0, hInst, NULL);
+            ShowWindow(hEdit, SW_SHOWNORMAL);
+
         case WM_PAINT :
             hdc = BeginPaint(hWnd, &ps);
+
+            {
+                char label[] = "Choose start point";
+                TextOut(hdc, 233, 80, label, strlen(label));
+            }
 
             char nn[edges + max(0, edges - 9)];
             int nx[edges];

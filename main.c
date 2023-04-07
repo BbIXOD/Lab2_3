@@ -9,6 +9,9 @@
 #define n4 8
 #define edges (n3 + 10)
 
+int currentDot = 0;
+int visited[edges];
+
 typedef struct Deck {
     int value;
     struct Deck *next;
@@ -25,7 +28,24 @@ deck* init(int v) {
     return d;
 }
 
+deck* unshift(deck *d, int v) {
+    if (d->prev != NULL) return NULL;
+
+    deck *this;
+    this = malloc(sizeof(deck));
+
+    d->prev = this;
+    this->next = d;
+    this->prev = NULL;
+
+    this->value = v;
+
+    return this;
+}
+
 deck* push(deck *d, int v) {
+    if (d->next != NULL) return NULL;
+
     deck *this;
     this = malloc(sizeof(deck));
 
@@ -169,6 +189,38 @@ void rotate(float angle, int r, int *arr) {
     int y = (int)((float)r * sinf(angle));
     arr[0] = x;
     arr[1] = y;
+
+}
+
+int dfsStep(int **matrix, deck *queue, deck *tree, int n) {
+    for (int i = 0; i < n; i++)
+        if (matrix[queue->value][i] && !visited[i]) {
+            push(queue, i);
+            int link[2] = {1, 2};
+            push(tree, *&link[0]);
+            visited[i] = 1;
+            return 0;
+        }
+    pop(queue);
+
+    if (queue == NULL) return 1;
+    return 0;
+
+}
+
+int bfsStep(int **matrix, deck *queue, deck *tree, int n) {
+    for (int i = 0; i < n; i++)
+        if (matrix[queue->value][i] && !visited[i]) {
+            unshift(queue, i);
+            int link[2] = {1, 2};
+            push(tree, *&link[0]);
+            visited[i] = 1;
+            return 0;
+        }
+    pop(queue);
+
+    if (queue == NULL) return 1;
+    return 0;
 
 }
 

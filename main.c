@@ -18,7 +18,7 @@ typedef struct Deck {
 
 int currentDot = 0;
 bool visited[edges];
-bool searchAlg = true;
+bool searchDfs = false;
 bool doSearch = false;
 bool initial = false;
 
@@ -79,8 +79,6 @@ deck* pop(deck *d) {
         printf("error");
         return NULL;
     }
-
-    printf("%d\n", d->prev->value);
     deck *newLast;
     newLast = d->prev;
     newLast->next = NULL;
@@ -222,15 +220,16 @@ bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             *qDeck = push(*qDeck, i);
-            int link[2] = {1, 2};
-            //*tDeck = push(*tDeck, *&link[0]);
+            int link[2] = {(*qDeck)->value, i};
+            *tDeck = push(*tDeck, *&link[0]);
             visited[i] = true;
             return false;
         }
+    if ((*qDeck)->prev == NULL) return true;
+
     *qDeck = pop(*qDeck);
 
-    if (*qDeck == NULL) return 1;
-    return 0;
+    return false;
 
 }
 
@@ -243,12 +242,12 @@ bool bfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
             int link[2] = {1, 2};
             *tDeck = push(*tDeck, *&link[0]);
             visited[i] = true;
-            return true;
+            return false;
         }
+    if ((*qDeck)->prev == NULL) return true;
 
     *qDeck = pop(*qDeck);
 
-    if (*qDeck == NULL) return true;
     return false;
 
 }
@@ -300,7 +299,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     PAINTSTRUCT ps;
     HINSTANCE hInst;
-    static HWND hBtnNext, hEdit;
+    static HWND hBtnNext, hBtnChange, hEdit;
 
 
     switch (messg) {
@@ -311,6 +310,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                     WS_CHILD | WS_VISIBLE | WS_BORDER,
                                     100, 100, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hBtnNext, SW_SHOWNORMAL);
+
+            hBtnChange = CreateWindow("button", "DFS/BFS",
+                                    WS_CHILD | WS_VISIBLE | WS_BORDER,
+                                    100, 130, 120, 30, hWnd, 0, hInst, NULL);
+            ShowWindow(hBtnChange, SW_SHOWNORMAL);
 
             hEdit = CreateWindow("edit", "1",
                                  WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -341,18 +345,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 clear(tree);
                 queue = init(currentDot);
                 tree = init(0);
-                visited[0] = true;
+
+                for (int i = 0; i < edges; i++) visited[i] = false;
+                visited[currentDot] = true;
+
                 initial = false;
             }
 
             {
                 char label[] = "Choose start point";
                 TextOut(hdc, 233, 80, label, (int)strlen(label));
+
+                char alg[] = "BFS";
+                if (searchDfs) alg[0] = 'D';
+                TextOut(hdc, 100, 180, alg, (int)strlen(alg));
             }
 
             bool finished = false;
             if (doSearch) {
-                finished = searchAlg ?
+                finished = searchDfs ?
                            dfsStep((int **) &matrixPtr[0], &queue, &tree, edges) :
                            bfsStep((int **) &matrixPtr[0], &queue, &tree, edges);
                 doSearch = false;
@@ -445,7 +456,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             break;
         case WM_COMMAND:
             if (lParam == (LPARAM)hBtnNext) {
-                char input[2];
+                char input[3];
                 GetWindowText(hEdit, input, sizeof(input));
 
                 int inputInt = atoi(input);
@@ -455,12 +466,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 if (inputInt - 1 != currentDot) {
                     currentDot = inputInt - 1;
                     initial = true;
-
-                    for (int i = 0; i < edges; i++) visited[i] = false;
                 }
                 else doSearch = true;
 
             }
+            else if (lParam == (LPARAM)hBtnChange) {
+                searchDfs = !searchDfs;
+                initial = true;
+            }
+
             InvalidateRect(hWnd, NULL, TRUE);
             break;
 

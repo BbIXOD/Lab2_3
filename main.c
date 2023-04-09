@@ -155,6 +155,8 @@ deck* findPushTree(deck *d, int find, int v) {
 
     if (d->brother != NULL) findPushTree(d->brother, find, v);
     if  (d->child != NULL) findPushTree(d->child, find, v);
+
+    printf("%d", d->value);
 }
 
 deck *testShow(deck *d) {
@@ -210,7 +212,7 @@ void generateList(int *x, int *y) {
 }
 
 void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
-    int incX, maxX = 400, minX = 900, curY = 200, incY = 100;
+    int incX, maxX = 400, minX = 900, curY = 200, incY = 40;
 
     deck *copy = d->child;
 
@@ -300,8 +302,8 @@ bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
 
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
-            *qDeck = push(*qDeck, i);
             findPushTree(*tDeck,(*qDeck)->value, i);
+            *qDeck = push(*qDeck, i);
             visited[i] = true;
             return false;
         }

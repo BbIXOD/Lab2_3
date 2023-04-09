@@ -156,7 +156,6 @@ deck* findPushTree(deck *d, int find, int v) {
     if (d->brother != NULL) findPushTree(d->brother, find, v);
     if  (d->child != NULL) findPushTree(d->child, find, v);
 
-    printf("%d", d->value);
 }
 
 deck *testShow(deck *d) {
@@ -212,12 +211,12 @@ void generateList(int *x, int *y) {
 }
 
 void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
-    int incX, maxX = 400, minX = 900, curY = 200, incY = 40;
+    int incX, maxX = 900, minX = 400, curY = 200, incY = 40;
 
     deck *copy = d->child;
 
     if (layer == 0) {
-        x[d->value] = (maxX + minX) / 2;
+        x[d->value] = (maxX - minX) / 2 + minX;
         y[d->value] = curY;
         for (int i = 0; i < n; i++) {
             perLayer[i] = 0;
@@ -237,13 +236,14 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
     }
 
     copy = d->child;
-    incX = (maxX - minX) / perLayer[layer];
+    incX = (maxX - minX) / (perLayer[layer] + 1);
     curY += incY * layer;
     while (copy != NULL) {
         y[copy->value] = curY;
-        x[copy->value] = minX + incX * indexes[layer];
-        indexes[layer]++;
+        x[copy->value] = maxX - incX * perLayer[layer];
+        printf("%d, %d \n", incX, layer);
 
+        perLayer[layer]--;
         copy = copy->brother;
     }
 }

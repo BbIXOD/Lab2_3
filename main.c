@@ -136,6 +136,8 @@ deck* pushTree(deck *d, int v) {
     deck *new;
     new = malloc(sizeof(deck));
     new->value = v;
+    new->child = NULL;
+    new->brother = NULL;
 
     deck *temp = d;
     d = d->child;
@@ -148,11 +150,11 @@ deck* pushTree(deck *d, int v) {
     return temp;
 }
 
-deck* findPushTree(deck *d, deck *start, int find, int v) {
-    if (d->value == find) return pushTree(start, v);
+deck* findPushTree(deck *d, int find, int v) {
+    if (d->value == find) pushTree(d, v);
 
-    if (d->child != NULL) findPushTree(d->child, d->child, find, v);
-    if (d->brother != NULL) findPushTree(d->brother, start, find, v);
+    if (d->brother != NULL) findPushTree(d->brother, find, v);
+    if  (d->child != NULL) findPushTree(d->child, find, v);
 }
 
 deck *testShow(deck *d) {
@@ -208,7 +210,7 @@ void generateList(int *x, int *y) {
 }
 
 void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
-    int incX, maxX = 900, minX = 500, curY = 700, incY = 100;
+    int incX, maxX = 400, minX = 900, curY = 200, incY = 100;
 
     deck *copy = d->child;
 
@@ -218,13 +220,12 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
         for (int i = 0; i < n; i++) {
             perLayer[i] = 0;
             indexes[i] = 0;
+            for (int j = 0; j < n; j++)
+                matrix[i][j] = 0.0f;
         }
         layer++;
     }
 
-    printf("some");
-    if (copy != NULL) printf("some2");
-    printf("%d\n", copy->value);
     while (copy != NULL) {
         perLayer[layer]++;
 
@@ -234,15 +235,15 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
     }
 
     copy = d->child;
-    incX = (maxX + minX) / perLayer[layer];
+    incX = (maxX - minX) / perLayer[layer];
     curY += incY * layer;
     while (copy != NULL) {
         y[copy->value] = curY;
-        x[copy->value] = minX + incX * indexes[layer]++;
+        x[copy->value] = minX + incX * indexes[layer];
+        indexes[layer]++;
+
         copy = copy->brother;
     }
-
-    printf("interesting\n");
 }
 
 void fillNums(char *arr, int len) {
@@ -300,7 +301,7 @@ bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             *qDeck = push(*qDeck, i);
-            findPushTree(*tDeck, *tDeck,(*qDeck)->value, i);
+            findPushTree(*tDeck,(*qDeck)->value, i);
             visited[i] = true;
             return false;
         }
@@ -318,7 +319,7 @@ bool bfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             unshift(copy, i);
-            *tDeck = findPushTree(*tDeck, *tDeck, (*qDeck)->value, i);
+            findPushTree(*tDeck, (*qDeck)->value, i);
             visited[i] = true;
             return false;
         }

@@ -10,16 +10,26 @@
 #define n4 8
 #define edges (n3 + 10)
 
-int currentDot = 0;
-bool visited[edges];
-bool searchAlg = true;
-bool doSearch = false;
-
 typedef struct Deck {
     int value;
     struct Deck *next;
     struct Deck *prev;
 } deck;
+
+int currentDot = 0;
+bool visited[edges];
+bool searchAlg = true;
+bool doSearch = false;
+bool initial = false;
+
+deck *queue, *tree;
+char nn[edges + max(0, edges - 9)];
+int nx[edges];
+int ny[edges];
+int dx = 16, dy = 16, dtx = 5;
+
+float linkageM[edges][edges];
+float *matrixPtr[edges];
 
 deck* init(int v) {
     deck *d;
@@ -47,7 +57,10 @@ deck* unshift(deck *d, int v) {
 }
 
 deck* push(deck *d, int v) {
-    if (d->next != NULL) return NULL;
+    if (d->next != NULL) {
+        printf("error");
+        return NULL;
+    }
 
     deck *this;
     this = malloc(sizeof(deck));
@@ -67,12 +80,12 @@ deck* pop(deck *d) {
         return NULL;
     }
 
+    printf("%d\n", d->prev->value);
     deck *newLast;
     newLast = d->prev;
     newLast->next = NULL;
 
     free(d);
-
     return newLast;
 }
 
@@ -90,13 +103,19 @@ deck* shift(deck *d) {
 }
 
 deck* clear(deck *d) {
-    while (d != NULL) d = d->next;
+    while (d->next != NULL) d = d->next;
 
     deck *temp;
 
     while (d != NULL) {
         temp = d;
         free(temp);
+        d = d->prev;
+    }
+}
+
+deck *testShow(deck *d) {
+    while (d != NULL) {
         d = d->prev;
     }
 }
@@ -198,34 +217,38 @@ void rotate(float angle, int r, int *arr) {
 
 }
 
-bool dfsStep(int **matrix, deck **queue, deck **tree, int n) {
+bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
+
     for (int i = 0; i < n; i++)
-        if (matrix[(*queue)->value][i] && !visited[i]) {
-            *queue = push(*queue, i);
+        if (matrix[(*qDeck)->value][i] && !visited[i]) {
+            *qDeck = push(*qDeck, i);
             int link[2] = {1, 2};
-            *tree = push(*tree, *&link[0]);
+            //*tDeck = push(*tDeck, *&link[0]);
             visited[i] = true;
             return false;
         }
-    *queue = pop(*queue);
+    *qDeck = pop(*qDeck);
 
-    if (queue == NULL) return 1;
+    if (*qDeck == NULL) return 1;
     return 0;
 
 }
 
-bool bfsStep(int **matrix, deck **queue, deck **tree, int n) {
+bool bfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
+    deck *copy = *qDeck;
+
     for (int i = 0; i < n; i++)
-        if (matrix[(*queue)->value][i] && !visited[i]) {
-            unshift(*queue, i);
+        if (matrix[(*qDeck)->value][i] && !visited[i]) {
+            unshift(copy, i);
             int link[2] = {1, 2};
-            *tree = push(*tree, *&link[0]);
+            *tDeck = push(*tDeck, *&link[0]);
             visited[i] = true;
             return true;
         }
-    *queue = pop(*queue);
 
-    if (queue == NULL) return true;
+    *qDeck = pop(*qDeck);
+
+    if (*qDeck == NULL) return true;
     return false;
 
 }
@@ -267,6 +290,9 @@ hPrevInstance, LPSTR lpszCmdLine, int nCmdShow) {
         TranslateMessage(&lpMsg);
         DispatchMessage(&lpMsg);
     }
+
+
+
     return (int)lpMsg.wParam;
 }
 
@@ -275,29 +301,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     PAINTSTRUCT ps;
     HINSTANCE hInst;
     static HWND hBtnNext, hEdit;
-
-    static deck *queue, *tree;
-    char nn[edges + max(0, edges - 9)];
-    int nx[edges];
-    int ny[edges];
-    int dx = 16, dy = 16, dtx = 5;
-
-    fillNums(nn, edges);
-    generateList(nx, ny);
-
-    float matrix[edges][edges];
-    float *matrixPtr[edges];
-    for (int i = 0; i < edges; i++) {
-        matrixPtr[i] = matrix[i];
-    }
-
-    srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
-    randM(&matrixPtr[0], edges);
-    mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.01f - n4 * 0.005f - 0.25f);
-
-    queue = init(currentDot);
-    tree = init(0);
-    visited[0] = true;
 
 
     switch (messg) {
@@ -314,8 +317,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                  230, 100, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hEdit, SW_SHOWNORMAL);
 
+            fillNums(nn, edges);
+            generateList(nx, ny);
+
+            for (int i = 0; i < edges; i++) {
+                matrixPtr[i] = linkageM[i];
+            }
+
+            srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
+            randM(&matrixPtr[0], edges);
+            mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.01f - n4 * 0.005f - 0.25f);
+
+            queue = init(currentDot);
+            tree = init(0);
+            visited[0] = true;
+
+            break;
         case WM_PAINT :
             hdc = BeginPaint(hWnd, &ps);
+
+            if (initial) {
+                clear(queue);
+                clear(tree);
+                queue = init(currentDot);
+                tree = init(0);
+                visited[0] = true;
+                initial = false;
+            }
 
             {
                 char label[] = "Choose start point";
@@ -329,12 +357,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                            bfsStep((int **) &matrixPtr[0], &queue, &tree, edges);
                 doSearch = false;
                 currentDot = queue->value;
-                printf("%d", currentDot);
 
                 TCHAR buffer[2];
                 wsprintf(buffer, TEXT("%d"), currentDot + 1);
-                //printf("%c, %c", buffer[0], buffer[1]);
                 SetWindowText(hEdit, buffer);
+
+                if (finished) printf("all done");
             }
 
             HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));
@@ -350,9 +378,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     float angle;
                     int destX, destY;
                     int rotation[2];
-                    if (matrix[i][j] == 1.0f) {
+                    if (linkageM[i][j] == 1.0f) {
                         int arc = 0;
-                        if (matrix[i][j] == matrix[j][i] && i > j) {
+                        if (linkageM[i][j] == linkageM[j][i] && i > j) {
                             arc = -1;
                         }
                         else {
@@ -426,13 +454,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
                 if (inputInt - 1 != currentDot) {
                     currentDot = inputInt - 1;
+                    initial = true;
 
-                    clear(queue);
-                    clear(tree);
-                    queue = init(currentDot);
-                    tree = init(0);
-
-                    visited[currentDot] = true;
+                    for (int i = 0; i < edges; i++) visited[i] = false;
                 }
                 else doSearch = true;
 

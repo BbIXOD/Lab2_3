@@ -132,26 +132,27 @@ void clearTree(deck *d) {
     free(d);
 }
 
-void pushTree(deck *d, int v) {
+deck* pushTree(deck *d, int v) {
     deck *new;
     new = malloc(sizeof(deck));
+    new->value = v;
 
-    if (d->child == NULL) d->child = new;
+    deck *temp = d;
+    d = d->child;
+
+    if (d == NULL) temp->child = new;
     else {
-        d = d->child;
         while (d->brother != NULL) d = d->brother;
         d->brother = new;
     }
+    return temp;
 }
 
-void findPushTree(deck *d, int find, int v) {
-    if (d->value == find) {
-        pushTree(d, v);
-        return;
-    }
+deck* findPushTree(deck *d, deck *start, int find, int v) {
+    if (d->value == find) return pushTree(start, v);
 
-    if (d->child != NULL) findPushTree(d->child, find, v);
-    if (d->brother != NULL) findPushTree(d->brother, find, v);
+    if (d->child != NULL) findPushTree(d->child, d->child, find, v);
+    if (d->brother != NULL) findPushTree(d->brother, start, find, v);
 }
 
 deck *testShow(deck *d) {
@@ -221,11 +222,14 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
         layer++;
     }
 
+    printf("some");
+    if (copy != NULL) printf("some2");
+    printf("%d\n", copy->value);
     while (copy != NULL) {
         perLayer[layer]++;
 
         matrix[d->value][copy->value] = 1.0f;
-        formTree(matrix, copy, x, y, n, layer + 1);
+        if (copy->child != NULL) formTree(matrix, copy, x, y, n, layer + 1);
         copy = copy->brother;
     }
 
@@ -237,6 +241,8 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
         x[copy->value] = minX + incX * indexes[layer]++;
         copy = copy->brother;
     }
+
+    printf("interesting\n");
 }
 
 void fillNums(char *arr, int len) {
@@ -294,7 +300,7 @@ bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             *qDeck = push(*qDeck, i);
-            findPushTree(*tDeck,(*qDeck)->value, i);
+            findPushTree(*tDeck, *tDeck,(*qDeck)->value, i);
             visited[i] = true;
             return false;
         }
@@ -312,7 +318,7 @@ bool bfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             unshift(copy, i);
-            //findPushTree(*tDeck,(*qDeck)->value, i);
+            *tDeck = findPushTree(*tDeck, *tDeck, (*qDeck)->value, i);
             visited[i] = true;
             return false;
         }
@@ -445,7 +451,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 wsprintf(buffer, TEXT("%d"), currentDot + 1);
                 SetWindowText(hEdit, buffer);
 
-                if (finished) formTree(&matrixPtr[0], tree, &nx[0], &ny[0], edges, 0);
+                if (finished) {
+                    printf("Here will be an error=)");
+                    formTree(&matrixPtr[0], tree, &nx[0], &ny[0], edges, 0);
+                }
             }
 
             HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));

@@ -10,6 +10,9 @@
 #define n4 8
 #define edges (n3 + 10)
 
+#define child next
+#define brother prev
+
 typedef struct Deck {
     int value;
     struct Deck *next;
@@ -27,6 +30,7 @@ char nn[edges + max(0, edges - 9)];
 int nx[edges];
 int ny[edges];
 int dx = 16, dy = 16, dtx = 5;
+int perLayer[edges], indexes[edges];
 
 float linkageM[edges][edges];
 float *matrixPtr[edges];
@@ -100,22 +104,59 @@ deck* shift(deck *d) {
     return newFirst;
 }
 
-deck* clear(deck *d) {
+void delete(deck *d) {
+    if (d->prev != NULL) d->prev->next = d->next;
+    if (d->next != NULL) d->next->prev = d->prev;
+
+    free(d);
+}
+
+void clear(deck *d) {
     while (d->next != NULL) d = d->next;
 
     deck *temp;
 
     while (d != NULL) {
         temp = d;
-        free(temp);
         d = d->prev;
+        free(temp);
     }
 }
 
-deck *testShow(deck *d) {
-    while (d != NULL) {
-        d = d->prev;
+void clearTree(deck *d) {
+    deck *temp;
+
+    if (d->child != NULL) clearTree(d->child);
+    if (d->brother != NULL) clearTree(d->brother);
+
+    free(d);
+}
+
+void pushTree(deck *d, int v) {
+    deck *new;
+    new = malloc(sizeof(deck));
+
+    if (d->child == NULL) d->child = new;
+    else {
+        d = d->child;
+        while (d->brother != NULL) d = d->brother;
+        d->brother = new;
     }
+}
+
+void findPushTree(deck *d, int find, int v) {
+    if (d->value == find) {
+        pushTree(d, v);
+        return;
+    }
+
+    if (d->child != NULL) findPushTree(d->child, find, v);
+    if (d->brother != NULL) findPushTree(d->brother, find, v);
+}
+
+deck *testShow(deck *d) {
+    while (d != NULL)
+        d = d->prev;
 }
 
 
@@ -163,6 +204,39 @@ void generateList(int *x, int *y) {
     int sl = (int)floor(noCenter * 0.25);
     x[index] = (x[0] + x[sl]) / 2;
     y[index] = (y[0] + y[sl * 2]) / 2;
+}
+
+void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
+    int incX, maxX = 900, minX = 500, curY = 700, incY = 100;
+
+    deck *copy = d->child;
+
+    if (layer == 0) {
+        x[d->value] = (maxX + minX) / 2;
+        y[d->value] = curY;
+        for (int i = 0; i < n; i++) {
+            perLayer[i] = 0;
+            indexes[i] = 0;
+        }
+        layer++;
+    }
+
+    while (copy != NULL) {
+        perLayer[layer]++;
+
+        matrix[d->value][copy->value] = 1.0f;
+        formTree(matrix, copy, x, y, n, layer + 1);
+        copy = copy->brother;
+    }
+
+    copy = d->child;
+    incX = (maxX + minX) / perLayer[layer];
+    curY += incY * layer;
+    while (copy != NULL) {
+        y[copy->value] = curY;
+        x[copy->value] = minX + incX * indexes[layer]++;
+        copy = copy->brother;
+    }
 }
 
 void fillNums(char *arr, int len) {
@@ -220,8 +294,7 @@ bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             *qDeck = push(*qDeck, i);
-            int link[2] = {(*qDeck)->value, i};
-            *tDeck = push(*tDeck, *&link[0]);
+            findPushTree(*tDeck,(*qDeck)->value, i);
             visited[i] = true;
             return false;
         }
@@ -239,8 +312,7 @@ bool bfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             unshift(copy, i);
-            int link[2] = {1, 2};
-            *tDeck = push(*tDeck, *&link[0]);
+            //findPushTree(*tDeck,(*qDeck)->value, i);
             visited[i] = true;
             return false;
         }
@@ -342,7 +414,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
             if (initial) {
                 clear(queue);
-                clear(tree);
+                clearTree(tree);
                 queue = init(currentDot);
                 tree = init(0);
 
@@ -373,7 +445,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 wsprintf(buffer, TEXT("%d"), currentDot + 1);
                 SetWindowText(hEdit, buffer);
 
-                if (finished) printf("all done");
+                if (finished) formTree(&matrixPtr[0], tree, &nx[0], &ny[0], edges, 0);
             }
 
             HPEN BPen = CreatePen(PS_SOLID, 2, RGB(50, 0, 255));
@@ -480,7 +552,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
         case WM_DESTROY:
             clear(queue);
-            clear(tree);
+            clearTree(tree);
 
             PostQuitMessage(0);
             break;

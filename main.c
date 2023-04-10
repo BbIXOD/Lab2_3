@@ -30,7 +30,7 @@ char nn[edges + max(0, edges - 9)];
 int nx[edges];
 int ny[edges];
 int dx = 16, dy = 16, dtx = 5;
-int perLayer[edges], indexes[edges];
+int perLayer[edges], increments[edges], values[edges];
 
 float linkageM[edges][edges];
 float *matrixPtr[edges];
@@ -151,7 +151,10 @@ deck* pushTree(deck *d, int v) {
 }
 
 deck* findPushTree(deck *d, int find, int v) {
-    if (d->value == find) pushTree(d, v);
+    if (d->value == find) {
+        printf("%d -> %d\n", find, v);
+        return pushTree(d, v);
+    }
 
     if (d->brother != NULL) findPushTree(d->brother, find, v);
     if  (d->child != NULL) findPushTree(d->child, find, v);
@@ -211,7 +214,7 @@ void generateList(int *x, int *y) {
 }
 
 void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
-    int incX, maxX = 900, minX = 400, curY = 200, incY = 40;
+    int maxX = 900, minX = 400, curY = 200, incY = 40; //I want to place this in other place, because next method uses same
 
     deck *copy = d->child;
 
@@ -220,7 +223,8 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
         y[d->value] = curY;
         for (int i = 0; i < n; i++) {
             perLayer[i] = 0;
-            indexes[i] = 0;
+            increments[i] = 0;
+            values[i] = 0;
             for (int j = 0; j < n; j++)
                 matrix[i][j] = 0.0f;
         }
@@ -235,15 +239,27 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
         copy = copy->brother;
     }
 
-    copy = d->child;
-    incX = (maxX - minX) / (perLayer[layer] + 1);
+    increments[layer] = (maxX - minX) / (perLayer[layer] + 1);
+}
+
+void placeTree(deck *d, int *x, int *y, int n, int layer) {
+    int minX = 400,  curY = 200, incY = 50;
+    deck *copy = d->child;
+
     curY += incY * layer;
     while (copy != NULL) {
-        y[copy->value] = curY;
-        x[copy->value] = maxX - incX * perLayer[layer];
-        printf("%d, %d \n", incX, layer);
+        values[layer] += increments[layer];
 
-        perLayer[layer]--;
+        y[copy->value] = curY;
+        x[copy->value] = minX + values[layer];
+
+        copy = copy->brother;
+    }
+
+    copy = d->child;
+
+    while (copy != NULL) {
+        if (copy->child != NULL) placeTree(copy, x, y, n, layer + 1);
         copy = copy->brother;
     }
 }
@@ -303,6 +319,7 @@ bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             findPushTree(*tDeck,(*qDeck)->value, i);
+            //printf("%d -> %d\n", (*qDeck)->value, i);
             *qDeck = push(*qDeck, i);
             visited[i] = true;
             return false;
@@ -425,7 +442,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 clear(queue);
                 clearTree(tree);
                 queue = init(currentDot);
-                tree = init(0);
+                tree = init(currentDot);
 
                 for (int i = 0; i < edges; i++) visited[i] = false;
                 visited[currentDot] = true;
@@ -455,8 +472,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 SetWindowText(hEdit, buffer);
 
                 if (finished) {
-                    printf("Here will be an error=)");
                     formTree(&matrixPtr[0], tree, &nx[0], &ny[0], edges, 0);
+                    placeTree(tree, &nx[0], &ny[0], edges, 1);
                 }
             }
 

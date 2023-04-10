@@ -151,10 +151,7 @@ deck* pushTree(deck *d, int v) {
 }
 
 deck* findPushTree(deck *d, int find, int v) {
-    if (d->value == find) {
-        printf("%d -> %d\n", find, v);
-        return pushTree(d, v);
-    }
+    if (d->value == find) return pushTree(d, v);
 
     if (d->brother != NULL) findPushTree(d->brother, find, v);
     if  (d->child != NULL) findPushTree(d->child, find, v);
@@ -214,8 +211,8 @@ void generateList(int *x, int *y) {
 }
 
 void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
-    int maxX = 900, minX = 400, curY = 200, incY = 40; //I want to place this in other place, because next method uses same
-
+    int maxX = 900, minX = 400, curY = 200, incY = 40;
+    //I want to place this in other place, because next method uses same but my compiler don`t support function in function
     deck *copy = d->child;
 
     if (layer == 0) {
@@ -319,7 +316,6 @@ bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
     for (int i = 0; i < n; i++)
         if (matrix[(*qDeck)->value][i] && !visited[i]) {
             findPushTree(*tDeck,(*qDeck)->value, i);
-            //printf("%d -> %d\n", (*qDeck)->value, i);
             *qDeck = push(*qDeck, i);
             visited[i] = true;
             return false;

@@ -31,7 +31,7 @@ int ny[edges];
 int dx = 16, dy = 16, dtx = 5;
 int perLayer[edges], increments[edges], values[edges];
 
-float linkageM[edges][edges];
+float weightM[edges][edges];
 float *matrixPtr[edges];
 
 deck* init(int v) {
@@ -155,13 +155,6 @@ deck* findPushTree(deck *d, int find, int v) {
 
 }
 
-deck *testShow(deck *d) {
-    while (d != NULL)
-        d = d->prev;
-}
-
-
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 char caption[] = "Lab 3";
@@ -209,11 +202,10 @@ void formTree(float **matrix, deck *d, int *x, int *y, int n, int layer) {
         }
         layer++;
     }
-
     while (copy != NULL) {
         perLayer[layer]++;
 
-        matrix[d->value][copy->value] = 1.0f;
+        matrix[d->value][copy->value] = weightM[d->value][copy->value];
         if (copy->child != NULL) formTree(matrix, copy, x, y, n, layer + 1);
         copy = copy->brother;
     }
@@ -291,8 +283,16 @@ void roundM(float **matrix, int n) {
     }
 }
 
+void copyM(float **matrix, float **source, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = source[i][j];
+        }
+    }
+}
+
 void showM(float **matrix, int n, HDC hdc) {
-    int curX = 300, curY = 300, incY = 30, incX = 30;
+    int curX = 100, curY = 300, incY = 30, incX = 30;
     char symbol[4];
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -323,7 +323,7 @@ bool kruskalStep(int **matrix, deck **tDeck, int n) {
                 pair[1] = j;
             }
     }
-    if (min < 0) return true;
+    if (min == INT_MAX) return true;
 
     visited[pair[1]] = true;
     findPushTree(*tDeck, pair[0], pair[1]);
@@ -400,7 +400,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             generateList(nx, ny);
 
             for (int i = 0; i < edges; i++) {
-                matrixPtr[i] = linkageM[i];
+                matrixPtr[i] = weightM[i];
             }
 
             srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
@@ -452,8 +452,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 SetWindowText(hEdit, buffer);
 
                 if (finished) {
-                    formTree(&matrixPtr[0], tree, &nx[0], &ny[0], edges, 0);
+
+                    float treeWeight[edges][edges];
+                    float *treeWPtr[edges];
+                    for (int i = 0; i < edges; i++) {
+                        treeWPtr[i] = treeWeight[i];
+                    }
+
+                    formTree(&treeWPtr[0], tree, &nx[0], &ny[0], edges, 0);
                     placeTree(tree, &nx[0], &ny[0], edges, 1);
+                    copyM(&matrixPtr[0], &treeWPtr[0], edges);
                 }
             }
 
@@ -464,11 +472,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             HPEN KPen = CreatePen(PS_SOLID, 1, RGB(20, 20, 5));
 
             SelectObject(hdc, KPen);
-
             for (int i = 0; i < edges; i++)
                 for (int j = 0; j < edges; j++) {
-                    int destX, destY;
-                    if (linkageM[i][j] > 0 && i <= j) {
+                    if (weightM[i][j] > 0 && (i <= j || finished)) {
                         bool arc = false;
 
                         MoveToEx(hdc, nx[i], ny[i], NULL);
@@ -537,9 +543,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 }
                 else doSearch = true;
 
+                InvalidateRect(hWnd, NULL, TRUE);
             }
-
-            InvalidateRect(hWnd, NULL, TRUE);
             break;
 
         case WM_DESTROY:

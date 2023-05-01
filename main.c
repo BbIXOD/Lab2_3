@@ -21,11 +21,10 @@ typedef struct Deck {
 
 int currentDot = 0;
 bool visited[edges];
-bool searchDfs = false;
 bool doSearch = false;
 bool initial = false;
 
-deck *queue, *tree;
+deck *tree;
 char nn[edges + max(0, edges - 9)];
 int nx[edges];
 int ny[edges];
@@ -254,8 +253,9 @@ void fillNums(char *arr, int len) {
 
 void randM(float **matrix, int n) {
     for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            matrix[i][j] = (float)rand() / RAND_MAX * 2;
+        for (int j = 0; j < n; j++) {
+            if (j < i) matrix[i][j] = matrix[j][i];
+            else matrix[i][j] = (float) rand() / RAND_MAX * 2; }
 }
 
 void mulM(float **matrix, int n, float mul) {
@@ -267,13 +267,37 @@ void mulM(float **matrix, int n, float mul) {
     }
 }
 
-void showM(float **matrix, int n, HDC hdc) {
-    int curX = 300, curY = 300, incY = 30, incX = 15;
-    char symbol[2];
+void mulMSimple(float **matrix, int n, float mul) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            sprintf(symbol, "%i", (int)matrix[i][j]);
-            TextOut(hdc, curX + j * incX, curY, symbol, 1);
+            matrix[i][j] *= mul;
+        }
+    }
+}
+
+void mulMEach(float **source, float **mul, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            source[i][j] *= mul[i][j];
+        }
+    }
+}
+
+void roundM(float **matrix, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            matrix[i][j] = roundf(matrix[i][j]);
+        }
+    }
+}
+
+void showM(float **matrix, int n, HDC hdc) {
+    int curX = 300, curY = 300, incY = 30, incX = 30;
+    char symbol[4];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            int length = sprintf(symbol, "%i", (int)matrix[i][j]);
+            TextOut(hdc, curX + j * incX, curY, symbol, length);
         }
         curY += incY;
     }
@@ -286,47 +310,26 @@ float getAngle(int startX, int endX, int startY, int endY) {
     return acosf((float)vx / len) * (float)(vy < 0 ? -1 : 1);
 }
 
-void rotate(float angle, int r, int *arr) {
-    int x = (int)((float)r * cosf(angle));
-    int y = (int)((float)r * sinf(angle));
-    arr[0] = x;
-    arr[1] = y;
+bool kruskalStep(int **matrix, deck **tDeck, int n) {
+    int pair[2];
+    int min = INT_MAX;
 
-}
+    for (int i = 0; i < n; i++) {
+        if (!visited[i]) continue;
+        for (int j = 0; j < n; j++)
+            if (!visited[j] && matrix[i][j] < min && matrix[i][j] > 0) {
+                min = matrix[i][j];
+                pair[0] = i;
+                pair[1] = j;
+            }
+    }
+    if (min < 0) return true;
 
-bool dfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
-
-    for (int i = 0; i < n; i++)
-        if (matrix[(*qDeck)->value][i] && !visited[i]) {
-            findPushTree(*tDeck,(*qDeck)->value, i);
-            *qDeck = push(*qDeck, i);
-            visited[i] = true;
-            return false;
-        }
-    if ((*qDeck)->prev == NULL) return true;
-
-    *qDeck = pop(*qDeck);
+    visited[pair[1]] = true;
+    findPushTree(*tDeck, pair[0], pair[1]);
+    currentDot = pair[1];
 
     return false;
-
-}
-
-bool bfsStep(int **matrix, deck **qDeck, deck **tDeck, int n) {
-    deck *copy = *qDeck;
-
-    for (int i = 0; i < n; i++)
-        if (matrix[(*qDeck)->value][i] && !visited[i]) {
-            unshift(copy, i);
-            findPushTree(*tDeck, (*qDeck)->value, i);
-            visited[i] = true;
-            return false;
-        }
-    if ((*qDeck)->prev == NULL) return true;
-
-    *qDeck = pop(*qDeck);
-
-    return false;
-
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE
@@ -376,7 +379,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     HDC hdc;
     PAINTSTRUCT ps;
     HINSTANCE hInst;
-    static HWND hBtnNext, hBtnChange, hEdit;
+    static HWND hBtnNext, hEdit;
 
 
     switch (messg) {
@@ -387,11 +390,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                     WS_CHILD | WS_VISIBLE | WS_BORDER,
                                     100, 100, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hBtnNext, SW_SHOWNORMAL);
-
-            hBtnChange = CreateWindow("button", "DFS/BFS",
-                                    WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                    100, 130, 120, 30, hWnd, 0, hInst, NULL);
-            ShowWindow(hBtnChange, SW_SHOWNORMAL);
 
             hEdit = CreateWindow("edit", "1",
                                  WS_CHILD | WS_VISIBLE | WS_BORDER,
@@ -407,20 +405,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
             srand(n1 * 1000 + n2 *100 + n3 *10 + n4);
             randM(&matrixPtr[0], edges);
-            mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.01f - n4 * 0.005f - 0.25f);
+            mulM(&matrixPtr[0], edges,  1.0f - n3 * 0.01f - n4 * 0.005f - 0.05f);
+            {
+                float helpM[edges][edges];
+                float *helpPtr[edges];
 
-            queue = init(currentDot);
-            tree = init(0);
-            visited[0] = true;
+                for (int i = 0; i < edges; i++) {
+                    helpPtr[i] = helpM[i];
+                }
+
+                randM(&helpPtr[0], edges);
+                mulMSimple(&helpPtr[0], edges, 100);
+                mulMEach(&matrixPtr[0], &helpPtr[0], edges);
+                roundM(&matrixPtr[0], edges);
+            }
+
+            tree = init(currentDot);
+            visited[currentDot] = true;
 
             break;
         case WM_PAINT :
             hdc = BeginPaint(hWnd, &ps);
 
             if (initial) {
-                clear(queue);
                 clearTree(tree);
-                queue = init(currentDot);
                 tree = init(currentDot);
 
                 for (int i = 0; i < edges; i++) visited[i] = false;
@@ -432,19 +440,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             {
                 char label[] = "Choose start point";
                 TextOut(hdc, 233, 80, label, (int)strlen(label));
-
-                char alg[] = "BFS";
-                if (searchDfs) alg[0] = 'D';
-                TextOut(hdc, 100, 180, alg, (int)strlen(alg));
             }
 
             bool finished = false;
             if (doSearch) {
-                finished = searchDfs ?
-                           dfsStep((int **) &matrixPtr[0], &queue, &tree, edges) :
-                           bfsStep((int **) &matrixPtr[0], &queue, &tree, edges);
+                finished = kruskalStep((int **)&matrixPtr[0], &tree, edges);
                 doSearch = false;
-                currentDot = queue->value;
 
                 TCHAR buffer[2];
                 wsprintf(buffer, TEXT("%d"), currentDot + 1);
@@ -467,28 +468,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             for (int i = 0; i < edges; i++)
                 for (int j = 0; j < edges; j++) {
                     int destX, destY;
-                    if (linkageM[i][j] == 1.0f) {
+                    if (linkageM[i][j] > 0 && i <= j) {
                         bool arc = false;
-                        bool lines = true;
 
-                        if (linkageM[i][j] == linkageM[j][i] && i > j) {
-                            lines = false;
-                        }
-                        else {
-                            for (int el = 0; el < edges; el++) {
-                                if (fabsf(getAngle(nx[i], nx[el], ny[i], ny[el])
-                                          - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
-                                    arc = true;
-                            }
-                        }
-                        if (lines) MoveToEx(hdc, nx[i], ny[i], NULL);
+                        MoveToEx(hdc, nx[i], ny[i], NULL);
 
                         if (i == j) {
                             AngleArc(hdc, nx[i] - dx * 2, ny[i], (int)((float)dx * 1.45f), 0, 359);
                         }
                         else {
 
-                            if (arc != 0) {
+
+                            for (int el = 0; el < edges; el++) {
+                                if (fabsf(getAngle(nx[i], nx[el], ny[i], ny[el])
+                                          - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
+                                    arc = true;
+                            }
+
+                            if (arc) {
                                 int halfX = (int) ((float) (nx[i] + nx[j]) * 0.5f);
                                 int halfY = (int) ((float) (ny[i] + ny[j]) * 0.5f);
                                 if (nx[i] == nx[j]) {
@@ -497,11 +494,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                     halfY += (dx * 2 + (halfX / 60)) * arc;
                                 }
 
-                                if (lines) LineTo(hdc, halfX, halfY);
+                                LineTo(hdc, halfX, halfY);
                             }
-                        }
 
-                        if (lines) LineTo(hdc, destX, destY);
+                            LineTo(hdc, nx[j], ny[j]);
+                        }
                     }
                 }
 
@@ -541,16 +538,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 else doSearch = true;
 
             }
-            else if (lParam == (LPARAM)hBtnChange) {
-                searchDfs = !searchDfs;
-                initial = true;
-            }
 
             InvalidateRect(hWnd, NULL, TRUE);
             break;
 
         case WM_DESTROY:
-            clear(queue);
             clearTree(tree);
 
             PostQuitMessage(0);

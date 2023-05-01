@@ -124,8 +124,6 @@ void clear(deck *d) {
 }
 
 void clearTree(deck *d) {
-    deck *temp;
-
     if (d->child != NULL) clearTree(d->child);
     if (d->brother != NULL) clearTree(d->brother);
 
@@ -168,21 +166,6 @@ deck *testShow(deck *d) {
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 char caption[] = "Lab 3";
-
-void arrow(float fi, int px, int py, HDC hdc) {
-    {
-        fi = fi - (float)M_PI;
-        int lx, ly, rx, ry;
-        lx = (int)(px + 15 * cos(fi + 0.3));
-        rx = (int)(px + 15 * cos(fi - 0.3));
-        ly = (int)(py + 15 * sin(fi + 0.3));
-        ry = (int)(py + 15 * sin(fi - 0.3));
-
-        MoveToEx(hdc, lx, ly, NULL);
-        LineTo(hdc, px, py);
-        LineTo(hdc, rx, ry);
-    }
-}
 
 void generateList(int *x, int *y) {
     int noCenter = edges - 1;
@@ -483,27 +466,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
 
             for (int i = 0; i < edges; i++)
                 for (int j = 0; j < edges; j++) {
-                    float angle;
                     int destX, destY;
-                    int rotation[2];
                     if (linkageM[i][j] == 1.0f) {
-                        int arc = 0;
+                        bool arc = false;
+                        bool lines = true;
+
                         if (linkageM[i][j] == linkageM[j][i] && i > j) {
-                            arc = -1;
+                            lines = false;
                         }
                         else {
                             for (int el = 0; el < edges; el++) {
                                 if (fabsf(getAngle(nx[i], nx[el], ny[i], ny[el])
                                           - getAngle(nx[el], nx[j], ny[el], ny[j])) <= FLT_MIN)
-                                    arc = 1;
+                                    arc = true;
                             }
                         }
-
-                        MoveToEx(hdc, nx[i], ny[i], NULL);
+                        if (lines) MoveToEx(hdc, nx[i], ny[i], NULL);
 
                         if (i == j) {
                             AngleArc(hdc, nx[i] - dx * 2, ny[i], (int)((float)dx * 1.45f), 0, 359);
-                            angle = M_PI / 4;
                         }
                         else {
 
@@ -511,23 +492,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                                 int halfX = (int) ((float) (nx[i] + nx[j]) * 0.5f);
                                 int halfY = (int) ((float) (ny[i] + ny[j]) * 0.5f);
                                 if (nx[i] == nx[j]) {
-                                    halfX += (dx * 2 + (halfY / 100)) * arc;
+                                    halfX += (dx * 2 + (halfY / 60)) * arc;
                                 } else {
-                                    halfY += (dx * 2 + (halfX / 100)) * arc;
+                                    halfY += (dx * 2 + (halfX / 60)) * arc;
                                 }
-                                angle = getAngle(halfX, nx[j], halfY, ny[j]);
-                                LineTo(hdc, halfX, halfY);
-                            }
-                            else {
-                                angle = getAngle(nx[i], nx[j], ny[i], ny[j]);
+
+                                if (lines) LineTo(hdc, halfX, halfY);
                             }
                         }
-                        rotate(angle, dx, rotation);
-                        destX = nx[j] - rotation[0];
-                        destY = ny[j] - rotation[1];
 
-                        LineTo(hdc, destX, destY);
-                        arrow(angle, destX, destY, hdc);
+                        if (lines) LineTo(hdc, destX, destY);
                     }
                 }
 

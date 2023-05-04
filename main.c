@@ -351,7 +351,7 @@ hPrevInstance, LPSTR lpszCmdLine, int nCmdShow) {
     HWND hWnd;
     MSG lpMsg;
     hWnd=CreateWindow(caption,
-                      "Lab 5 by Diachok Maxim",
+                      "Lab 6 by Diachok Maxim",
                       WS_OVERLAPPEDWINDOW,
                       100,
                       100,

@@ -245,9 +245,8 @@ void fillNums(char *arr, int len) {
 
 void randM(float **matrix, int n) {
     for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++) {
-            if (j < i) matrix[i][j] = matrix[j][i];
-            else matrix[i][j] = (float) rand() / RAND_MAX * 2; }
+        for (int j = 0; j < n; j++)
+            matrix[i][j] = (float) rand() / RAND_MAX * 2;
 }
 
 void mulM(float **matrix, int n, float mul) {
@@ -418,6 +417,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 mulMSimple(&helpPtr[0], edges, 100);
                 mulMEach(&matrixPtr[0], &helpPtr[0], edges);
                 roundM(&matrixPtr[0], edges);
+
+                int b[edges][edges],
+                c[edges][edges],
+                d[edges][edges];
+
+                for (int i = 0; i < edges; i++)
+                    for (int j = 0; j < edges; j++)
+                        b[i][j] = weightM[i][j] > 0;
+
+                for (int i = 0; i < edges; i++)
+                    for (int j = 0; j < edges; j++) {
+                        c[i][j] = b[i][j] != b[j][i];
+                        d[i][j] = b[i][j] == 1 && b[j][i] == 1;
+                    }
+
+                for (int i = 0; i < edges; i++) {
+                    for (int j = 0; j < i; j++) {
+                        weightM[i][j] = (float) (c[i][j] + d[i][j]) * weightM[i][j];
+                        weightM[j][i] = weightM[i][j];
+                    }
+                    weightM[i][i] = 0;
+                }
             }
 
             tree = init(currentDot);

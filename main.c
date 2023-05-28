@@ -147,7 +147,7 @@ void multiplyM(int **matrix, int **source, int n) {
         }
 }
 
-void findWays(int **matrix, int n, int min, int length) {
+void findWaysExisting(int **matrix, int n, int min, int length) {
     min--;
 
     int helpM[n][n];
@@ -177,6 +177,41 @@ void findWays(int **matrix, int n, int min, int length) {
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
             matrix[i][j] = matrix[i][j] > 0;
+}
+
+void checkWay(int **matrix, int n, int length, int myLength, int tree[]) {
+    if(myLength == length + 1)
+        for (int i = 0; i < length; i++) {
+            printf("%d", tree[i] + 1);
+            if (i == length - 1) {
+                printf("\n");
+                return;
+            }
+
+            printf("->");
+        }
+
+    int newTree[myLength];
+    for (int i = 0; i < myLength - 1; i++) {
+        newTree[i] = tree[i];
+    }
+
+
+    for (int i = 0; i < n; i++) {
+        if (matrix[newTree[myLength - 2]][i] == 0) continue;
+        newTree[myLength - 1] = i;
+        checkWay(matrix, n, length, myLength + 1, newTree);
+    }
+}
+
+void findAndPrintWays(int **matrix, int n, int length) {
+    int tree[1];
+
+    printf("Ways with length %d\n", length);
+    for (int i = 0; i < n; i++) {
+        tree[0] = i;
+        checkWay(matrix, n, length, 2, tree);
+    }
 }
 
 void findSame(int **matrix, int n) {
@@ -214,7 +249,7 @@ void findSame(int **matrix, int n) {
 void linkM(float **matrix, int **outM, int **helpM, int n) {
 
     setM(outM, matrix, n);
-    findWays(outM, n, 1, n - 1);
+    findWaysExisting(outM, n, 1, n - 1);
 
     for (int i = 0; i < n; i++)
         outM[i][i] = 1;
@@ -453,13 +488,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                     TextOut(hdc, 270, 370, "Outs", 4);
                     break;
                 case 2 :
+                    findAndPrintWays((int **)&matrixPtr[0], edges, 2);
+                    findAndPrintWays((int **)&matrixPtr[0], edges, 3);
+                    TextOut(hdc,  470, 137, "Look to console=)", 17);
+
                     setM(&outPtr[0], &matrixPtr[0], edges);
-                    findWays(&outPtr[0], edges, 2, 3);
+                    findWaysExisting(&outPtr[0], edges, 2, 3);
                     showM(&outPtr[0], edges, edges, hdc);
                     break;
                 case 3 :
                     setM(&outPtr[0], &matrixPtr[0], edges);
-                    findWays(&outPtr[0], edges, 1, edges - 1);
+                    findWaysExisting(&outPtr[0], edges, 1, edges - 1);
                     showM(&outPtr[0], edges, edges, hdc);
                     break;
                 case 4 :{
@@ -625,6 +664,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
                 cond = false;
 
             InvalidateRect(hWnd, NULL, TRUE);
+            system("cls");
             break;
 
         case WM_DESTROY:

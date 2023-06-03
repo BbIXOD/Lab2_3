@@ -1,6 +1,5 @@
 #include<windows.h>
 #include<math.h>
-#include <time.h>
 #include <stdbool.h>
 #include <float.h>
 #include <stdio.h>
@@ -180,7 +179,7 @@ void findWaysExisting(int **matrix, int n, int min, int length) {
 }
 
 void checkWay(int **matrix, int n, int length, int myLength, int tree[]) {
-    if(myLength == length + 1)
+    if(myLength == length + 2)
         for (int i = 0; i < length; i++) {
             printf("%d", tree[i] + 1);
             if (i == length - 1) {

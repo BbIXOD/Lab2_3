@@ -180,9 +180,9 @@ void findWaysExisting(int **matrix, int n, int min, int length) {
 
 void checkWay(int **matrix, int n, int length, int myLength, int tree[]) {
     if(myLength == length + 2)
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i <= length; i++) {
             printf("%d", tree[i] + 1);
-            if (i == length - 1) {
+            if (i == length) {
                 printf("\n");
                 return;
             }
@@ -340,7 +340,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
     HINSTANCE hInst;
 
     static HWND hBtnToDir, hBtnToUnDir, hBtnAdjGraph, hBtnPow, hBtnWays, hBtnLinked, hBtnModify, hBtnSL, hBtnSLM,
-    hBtnLG, hBtnIso, hBtnHang;
+            hBtnLG, hBtnIso, hBtnHang;
 
     switch (messg) {
         case WM_CREATE : {
@@ -382,8 +382,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             ShowWindow(hBtnSL, SW_SHOWNORMAL);
 
             hBtnSLM = CreateWindow("button", "Links matrix",
-                                  WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                  350, 220, 120, 30, hWnd, 0, hInst, NULL);
+                                   WS_CHILD | WS_VISIBLE | WS_BORDER,
+                                   350, 220, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hBtnSLM, SW_SHOWNORMAL);
 
             hBtnIso = CreateWindow("button", "Isolated",
@@ -392,8 +392,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT messg,WPARAM wParam, LPARAM lParam) {
             ShowWindow(hBtnIso, SW_SHOWNORMAL);
 
             hBtnHang = CreateWindow("button", "Hanging",
-                                   WS_CHILD | WS_VISIBLE | WS_BORDER,
-                                   350, 280, 120, 30, hWnd, 0, hInst, NULL);
+                                    WS_CHILD | WS_VISIBLE | WS_BORDER,
+                                    350, 280, 120, 30, hWnd, 0, hInst, NULL);
             ShowWindow(hBtnHang, SW_SHOWNORMAL);
 
             hBtnModify = CreateWindow("button", "Modify",
